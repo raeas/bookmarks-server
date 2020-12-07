@@ -15,6 +15,7 @@ const morganOption = (NODE_ENV === 'production')
 app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
+app.use(express.json());
 
 // set up winston
 const logger = winston.createLogger({
@@ -31,18 +32,30 @@ if (NODE_ENV !== 'production') {
   }));
 }
 
+app.use(function validateBearerToken(req, res, next) {
+  const apiToken = process.env.API_TOKEN
+  const authToken = req.get('Authorization')
+
+  if (!authToken || authToken.split(' ')[1] !== apiToken) {
+    logger.error(`Unauthorized request to path: ${req.path}`)
+    return res.status(401).json({ error: 'Unauthorized request' })
+  }
+  // move to the next middleware
+  next()
+})
+
 const bookmarks = [
-  { id: uuid(),
+  { //id: uuid(),
     title: 'Thinkful',
     url: 'https://www.thinkful.com',
     description: 'Think outside the classroom',
     rating: 5 },
-  { id: uuid(),
+  { //id: uuid(),
     title: 'Google',
     url: 'https://www.google.com',
     description: 'Where we find everything else',
     rating: 4 },
-  { id: uuid(),
+  { //id: uuid(),
     title: 'MDN',
     url: 'https://developer.mozilla.org',
     description: 'The only place to find web documentation',
@@ -53,6 +66,26 @@ const bookmarks = [
 app.get('/', (req, res) => {
   res.send('Hello, world!')
 })
+
+app.get('/bookmarks', (req, res) => {
+  res
+    .json(bookmarks);
+});
+
+app.get('/bookmarks/:bookmark_id', (req, res) => {
+  const { bookmark_id } = req.params
+  const bookmark = bookmarks.find(c => c.id == bookmark_id);
+
+  // make sure we found a card
+  if (!bookmark) {
+    logger.error(`Bookmark with id ${bookmark_id} not found.`);
+    return res
+      .status(404)
+      .send('Bokokmark Not Found');
+  }
+
+  res.json(bookmark);
+});
 
 app.use(function errorHandler(error, req, res, next) {
   let response
