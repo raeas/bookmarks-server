@@ -104,17 +104,31 @@ app.post(bodyParser, (req, res) => {
 
 app.get('/bookmarks/:bookmark_id', (req, res) => {
   const { bookmark_id } = req.params
-  const bookmark = bookmarks.find(c => c.id == bookmark_id);
+  const bookmark = bookmarks.find(b => b.id == bookmark_id);
 
-  // make sure we found a card
+  // make sure we found a bookmark
   if (!bookmark) {
     logger.error(`Bookmark with id ${bookmark_id} not found.`);
-    return res
-      .status(404)
-      .send('Bokokmark Not Found');
+    return res.status(404).send('Bookmark Not Found');
   }
 
   res.json(bookmark);
+});
+
+app.delete('/bookmarks/:bookmark_id', (req, res) => {
+  const { bookmark_id } = req.params;
+
+  const bookmarkIndex = bookmarks.findIndex(b => b.id === bookmark_id);
+
+  if (bookmarkIndex === -1) {
+    logger.error(`Bookmark with id ${bookmark_id} not found.`);
+    return res.status(404).send('Bookmark Not Found');
+  }
+
+  bookmarks.splice(bookmarkIndex, 1);
+
+  logger.info(`Bookmark with id ${bookmark_id} deleted.`);
+  res.status(204).end();
 });
 
 app.use(function errorHandler(error, req, res, next) {
