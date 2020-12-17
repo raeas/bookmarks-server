@@ -401,7 +401,7 @@ describe('DELETE /api/bookmarks/:id', () => {
       it(`responds with 400 invalid 'url' if not a valid URL`, () => {
         const idToUpdate = 2
         const updateInvalidUrl = {
-          url: 'http://invalid-url',
+          url: 'htp://invalid-url',
         }
         return supertest(app)
           .patch(`/api/bookmarks/${idToUpdate}`)
