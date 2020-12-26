@@ -299,7 +299,7 @@ describe('DELETE /api/bookmarks/:id', () => {
   })
 //17----------------------------------------------------------------------------
   describe(`PATCH /api/bookmarks/:bookmark_id`, () => {
-    context(`Given no bookmarks`, () => {
+    context(`Given no bookmarks in the database`, () => {
       it(`responds with 404`, () => {
         const bookmarkId = 123456
         return supertest(app)

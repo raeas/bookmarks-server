@@ -1,13 +1,17 @@
 const express = require('express')
+//this is not necessary if you are using a db because a db will auto-generate an unique id
 const { v4: uuid } = require('uuid');
 const { isWebUri } = require('valid-url')
 const logger = require('../logger')
+//store file is not required if you are using a db
 const store = require('../store')
 const xss = require('xss')
+const path = require('path')
 const BookmarksService = require('./bookmarks-service')
 const { getBookmarkValidationError } = require('./bookmark-validator')
 
 const bookmarksRouter = express.Router()
+//use the express.json() middleware to parse the body of request
 const bodyParser = express.json()
 
 const serializeBookmark = bookmark => ({
@@ -37,10 +41,13 @@ bookmarksRouter
       }
     }
 
+    //Take the title, url, description, rating out of the req.body
     const { title, url, description, rating } = req.body
 
+    //const the ratingNum from the rating value 
     const ratingNum = Number(rating)
 
+    ///// #1 VALIDATION post request step. this is validation code for the post request!!!!
     if (!Number.isInteger(ratingNum) || ratingNum < 0 || ratingNum > 5) {
       logger.error(`Invalid rating '${rating}' supplied`)
       return res.status(400).send({
@@ -55,17 +62,20 @@ bookmarksRouter
       })
     }
 
+    //const a newBookmark from the title, url, description, rating
     const newBookmark = { title, url, description, rating }
 
+    //// #2 If the data is valid, process it:
     BookmarksService.insertBookmark(
       req.app.get('db'),
       newBookmark
     )
       .then(bookmark => {
         logger.info(`Bookmark with id ${bookmark.id} created.`)
+        //construct a response 201 (created) w/ the url + id and the json of the newBookmark
         res
           .status(201)
-          .location(`/api/bookmarks/${bookmark.id}`)
+          .location(path.posix.join(req.originalUrl) + `/${bookmark.id}`)
           .json(serializeBookmark(bookmark))
       })
       .catch(next)
@@ -95,8 +105,8 @@ bookmarksRouter
   .patch(bodyParser, (req, res, next) => {
     const { title, url, description, rating } = req.body
     const bookmarkToUpdate = { title, url, description, rating }
-
     const numberOfValues = Object.values(bookmarkToUpdate).filter(Boolean).length
+    
     if (numberOfValues === 0) {
       logger.error(`Invalid update without required fields`)
       return res.status(400).json({

@@ -1,3 +1,4 @@
+//winston is a logging library for node `npm install winston`
 const winston = require('winston');
 const { NODE_ENV } = require('./config')
 
